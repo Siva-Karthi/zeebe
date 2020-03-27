@@ -15,6 +15,7 @@ import io.zeebe.el.ExpressionLanguageFactory;
 import io.zeebe.model.bpmn.Bpmn;
 import io.zeebe.model.bpmn.BpmnModelInstance;
 import io.zeebe.model.bpmn.instance.ConditionExpression;
+import io.zeebe.model.bpmn.instance.Message;
 import io.zeebe.model.bpmn.instance.zeebe.ZeebeCalledElement;
 import io.zeebe.model.bpmn.instance.zeebe.ZeebeInput;
 import io.zeebe.model.bpmn.instance.zeebe.ZeebeLoopCharacteristics;
@@ -176,21 +177,21 @@ public final class ZeebeRuntimeValidationTest {
         Arrays.asList(expect(ZeebeOutput.class, MISSING_PATH_EXPRESSION_MESSAGE))
       },
       {
-        // correlation key expression is not supported
+        // name expression is invalid
         Bpmn.createExecutableProcess("process")
             .startEvent()
             .intermediateCatchEvent("catch")
-            .message(b -> b.name("message").zeebeCorrelationKey(INVALID_EXPRESSION))
+            .message(b -> b.nameExpression(INVALID_EXPRESSION).zeebeCorrelationKey("1"))
             .endEvent()
             .done(),
-        Arrays.asList(expect(ZeebeSubscription.class, INVALID_EXPRESSION_MESSAGE))
+        Arrays.asList(expect(Message.class, INVALID_EXPRESSION_MESSAGE))
       },
       {
-        // correlation key expression is not supported
+        // invalid correlation key expression
         Bpmn.createExecutableProcess("process")
             .startEvent()
             .receiveTask("catch")
-            .message(b -> b.name("message").zeebeCorrelationKey(INVALID_EXPRESSION))
+            .message(b -> b.name("message").zeebeCorrelationKeyExpression(INVALID_EXPRESSION))
             .endEvent()
             .done(),
         Arrays.asList(expect(ZeebeSubscription.class, INVALID_EXPRESSION_MESSAGE))
