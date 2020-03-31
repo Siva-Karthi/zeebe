@@ -56,7 +56,15 @@ public final class TimerStartEventTest {
 
   private static final BpmnModelInstance MULTI_TIMER_START_MODEL = createMultipleTimerStartModel();
 
-  @Rule public final EngineRule engine = EngineRule.singlePartition();
+  private static final BpmnModelInstance FEEL_EXPRESSION_MODEL =
+      Bpmn.createExecutableProcess("process_5")
+          .startEvent("start_5")
+          .timerWithCycleExpression("\"R1/PT1S\"")
+          .endEvent("end_5")
+          .done();
+
+  @Rule
+  public final EngineRule engine = EngineRule.singlePartition();
 
   private static BpmnModelInstance createTimerAndMessageStartEventsModel() {
     final ProcessBuilder builder = Bpmn.createExecutableProcess("process");
@@ -68,7 +76,7 @@ public final class TimerStartEventTest {
   private static BpmnModelInstance createMultipleTimerStartModel() {
     final ProcessBuilder builder = Bpmn.createExecutableProcess("process_4");
     builder.startEvent("start_4").timerWithCycle("R/PT2S").endEvent("end_4");
-    return builder.startEvent("start_5").timerWithCycle("R/PT3S").endEvent("end_5").done();
+    return builder.startEvent("start_4_2").timerWithCycle("R/PT3S").endEvent("end_4_2").done();
   }
 
   @Test
@@ -93,6 +101,34 @@ public final class TimerStartEventTest {
     Assertions.assertThat(timerRecord)
         .hasWorkflowInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE)
         .hasTargetElementId("start_1")
+        .hasElementInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE);
+
+    final long now = System.currentTimeMillis();
+    assertThat(timerRecord.getDueDate()).isBetween(now, now + 1000L);
+  }
+
+  @Test
+  public void shouldCreateTimerFromFeelExpression() {
+    // when
+    final DeployedWorkflow deployedWorkflow =
+        engine
+            .deployment()
+            .withXmlResource(FEEL_EXPRESSION_MODEL)
+            .deploy()
+            .getValue()
+            .getDeployedWorkflows()
+            .get(0);
+
+    // then
+    final TimerRecordValue timerRecord =
+        RecordingExporter.timerRecords(TimerIntent.CREATED)
+            .withWorkflowKey(deployedWorkflow.getWorkflowKey())
+            .getFirst()
+            .getValue();
+
+    Assertions.assertThat(timerRecord)
+        .hasWorkflowInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE)
+        .hasTargetElementId("start_5")
         .hasElementInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE);
 
     final long now = System.currentTimeMillis();
@@ -541,8 +577,8 @@ public final class TimerStartEventTest {
     // when
     engine.increaseTime(Duration.ofSeconds(1));
     assertThat(
-            RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-                .withElementId("end_5")
+        RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
+            .withElementId("end_4_2")
                 .withWorkflowKey(deployedWorkflow.getWorkflowKey())
                 .exists())
         .isTrue();
@@ -654,4 +690,6 @@ public final class TimerStartEventTest {
         .extracting(r -> r.getValue().getElementId())
         .containsOnly("timer_start");
   }
+
+
 }
