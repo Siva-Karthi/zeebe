@@ -10,6 +10,8 @@ package io.zeebe.el;
 import static io.zeebe.test.util.MsgPackUtil.asMsgPack;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
 import org.junit.Test;
@@ -27,6 +29,8 @@ public class EvaluationResultTest {
     assertThat(evaluationResult.getString()).isEqualTo("x");
     assertThat(evaluationResult.getBoolean()).isNull();
     assertThat(evaluationResult.getNumber()).isNull();
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getDuration()).isNull();
     assertThat(evaluationResult.getList()).isNull();
   }
 
@@ -38,6 +42,8 @@ public class EvaluationResultTest {
     assertThat(evaluationResult.getString()).isEqualTo("x");
     assertThat(evaluationResult.getBoolean()).isNull();
     assertThat(evaluationResult.getNumber()).isNull();
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getDuration()).isNull();
     assertThat(evaluationResult.toBuffer()).isEqualTo(asMsgPack("\"x\""));
     assertThat(evaluationResult.getList()).isNull();
   }
@@ -50,6 +56,8 @@ public class EvaluationResultTest {
     assertThat(evaluationResult.getNumber()).isEqualTo(1L);
     assertThat(evaluationResult.getString()).isNull();
     assertThat(evaluationResult.getBoolean()).isNull();
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getDuration()).isNull();
     assertThat(evaluationResult.toBuffer()).isEqualTo(asMsgPack("1"));
     assertThat(evaluationResult.getList()).isNull();
   }
@@ -62,7 +70,35 @@ public class EvaluationResultTest {
     assertThat(evaluationResult.getBoolean()).isTrue();
     assertThat(evaluationResult.getString()).isNull();
     assertThat(evaluationResult.getNumber()).isNull();
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getDuration()).isNull();
     assertThat(evaluationResult.toBuffer()).isEqualTo(asMsgPack("true"));
+    assertThat(evaluationResult.getList()).isNull();
+  }
+
+  @Test
+  public void durationExpression() {
+    final var evaluationResult = evaluateExpression("=duration(\"PT2H\")");
+
+    assertThat(evaluationResult.getType()).isEqualTo(ResultType.DURATION);
+    assertThat(evaluationResult.getDuration()).isEqualTo(Duration.ofHours(2));
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getBoolean()).isNull();
+    assertThat(evaluationResult.getString()).isNull();
+    assertThat(evaluationResult.getNumber()).isNull();
+    assertThat(evaluationResult.getList()).isNull();
+  }
+
+  @Test
+  public void periodExpression() {
+    final var evaluationResult = evaluateExpression("=duration(\"P2M\")");
+
+    assertThat(evaluationResult.getType()).isEqualTo(ResultType.PERIOD);
+    assertThat(evaluationResult.getDuration()).isNull();
+    assertThat(evaluationResult.getPeriod()).isEqualTo(Period.ofMonths(2));
+    assertThat(evaluationResult.getBoolean()).isNull();
+    assertThat(evaluationResult.getString()).isNull();
+    assertThat(evaluationResult.getNumber()).isNull();
     assertThat(evaluationResult.getList()).isNull();
   }
 
@@ -74,6 +110,8 @@ public class EvaluationResultTest {
     assertThat(evaluationResult.getString()).isNull();
     assertThat(evaluationResult.getBoolean()).isNull();
     assertThat(evaluationResult.getNumber()).isNull();
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getDuration()).isNull();
     assertThat(evaluationResult.toBuffer()).isEqualTo(asMsgPack("null"));
     assertThat(evaluationResult.getList()).isNull();
   }
@@ -86,6 +124,8 @@ public class EvaluationResultTest {
     assertThat(evaluationResult.getString()).isNull();
     assertThat(evaluationResult.getBoolean()).isNull();
     assertThat(evaluationResult.getNumber()).isNull();
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getDuration()).isNull();
     assertThat(evaluationResult.toBuffer()).isEqualTo(asMsgPack("[1,2,3]"));
     assertThat(evaluationResult.getList())
         .isEqualTo(List.of(asMsgPack("1"), asMsgPack("2"), asMsgPack("3")));
@@ -99,6 +139,8 @@ public class EvaluationResultTest {
     assertThat(evaluationResult.getString()).isNull();
     assertThat(evaluationResult.getBoolean()).isNull();
     assertThat(evaluationResult.getNumber()).isNull();
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getDuration()).isNull();
     assertThat(evaluationResult.toBuffer()).isEqualTo(asMsgPack(Map.of("x", 1)));
     assertThat(evaluationResult.getList()).isNull();
   }

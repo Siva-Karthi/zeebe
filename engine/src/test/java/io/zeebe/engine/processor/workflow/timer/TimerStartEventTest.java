@@ -63,8 +63,7 @@ public final class TimerStartEventTest {
           .endEvent("end_5")
           .done();
 
-  @Rule
-  public final EngineRule engine = EngineRule.singlePartition();
+  @Rule public final EngineRule engine = EngineRule.singlePartition();
 
   private static BpmnModelInstance createTimerAndMessageStartEventsModel() {
     final ProcessBuilder builder = Bpmn.createExecutableProcess("process");
@@ -577,8 +576,8 @@ public final class TimerStartEventTest {
     // when
     engine.increaseTime(Duration.ofSeconds(1));
     assertThat(
-        RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-            .withElementId("end_4_2")
+            RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
+                .withElementId("end_4_2")
                 .withWorkflowKey(deployedWorkflow.getWorkflowKey())
                 .exists())
         .isTrue();
@@ -690,6 +689,4 @@ public final class TimerStartEventTest {
         .extracting(r -> r.getValue().getElementId())
         .containsOnly("timer_start");
   }
-
-
 }
