@@ -46,7 +46,8 @@ public class FeelCycleFunctionTest {
   @Test
   public void threeTimesOneHourDuration() {
     final var context = Map.of("repetitions", MsgPackUtil.asMsgPack("3"));
-    final var evaluationResult = evaluateExpression("cycle(repetitions, duration(\"PT1H\"))", context::get);
+    final var evaluationResult =
+        evaluateExpression("cycle(repetitions, duration(\"PT1H\"))", context::get);
 
     assertThat(evaluationResult.getType()).isEqualTo(ResultType.STRING);
     assertThat(evaluationResult.getString()).isEqualTo("R3/PT1H");
@@ -55,7 +56,8 @@ public class FeelCycleFunctionTest {
   @Test
   public void threeTimesTwoMonthsDuration() {
     final var context = Map.of("repetitions", MsgPackUtil.asMsgPack("3"));
-    final var evaluationResult = evaluateExpression("cycle(repetitions, duration(\"P2M\"))", context::get);
+    final var evaluationResult =
+        evaluateExpression("cycle(repetitions, duration(\"P2M\"))", context::get);
 
     assertThat(evaluationResult.getType()).isEqualTo(ResultType.STRING);
     assertThat(evaluationResult.getString()).isEqualTo("R3/P2M");
@@ -64,7 +66,8 @@ public class FeelCycleFunctionTest {
   @Test
   public void nullTimesOneHourDuration() {
     final var context = Map.of("repetitions", MsgPackUtil.asMsgPack("null"));
-    final var evaluationResult = evaluateExpression("cycle(repetitions, duration(\"PT1H\"))", context::get);
+    final var evaluationResult =
+        evaluateExpression("cycle(repetitions, duration(\"PT1H\"))", context::get);
 
     assertThat(evaluationResult.getType()).isEqualTo(ResultType.STRING);
     assertThat(evaluationResult.getString()).isEqualTo("R/PT1H");
@@ -73,7 +76,8 @@ public class FeelCycleFunctionTest {
   @Test
   public void nullTimesTwoMonthsDuration() {
     final var context = Map.of("repetitions", MsgPackUtil.asMsgPack("null"));
-    final var evaluationResult = evaluateExpression("cycle(repetitions, duration(\"P2M\"))", context::get);
+    final var evaluationResult =
+        evaluateExpression("cycle(repetitions, duration(\"P2M\"))", context::get);
 
     assertThat(evaluationResult.getType()).isEqualTo(ResultType.STRING);
     assertThat(evaluationResult.getString()).isEqualTo("R/P2M");
