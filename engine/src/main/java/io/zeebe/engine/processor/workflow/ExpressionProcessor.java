@@ -19,6 +19,7 @@ import io.zeebe.engine.processor.workflow.message.MessageCorrelationKeyException
 import io.zeebe.engine.state.instance.VariablesState;
 import io.zeebe.model.bpmn.util.time.Interval;
 import io.zeebe.protocol.record.value.ErrorType;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -26,6 +27,8 @@ import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 
 public final class ExpressionProcessor {
+
+  private static final EvaluationContext EMPTY_EVALUATION_CONTEXT = x -> null;
 
   private final DirectBuffer resultView = new UnsafeBuffer();
 
@@ -65,7 +68,8 @@ public final class ExpressionProcessor {
    * thrown.
    *
    * @param expression the expression to evaluate
-   * @param scopeKey the scope to load the variables from
+   * @param scopeKey the scope to load the variables from (a negative key is intended to imply an
+   *     empty variable context)
    * @return the evaluation result as buffer
    * @throws EvaluationException if expression evaluation failed
    */
@@ -121,6 +125,16 @@ public final class ExpressionProcessor {
         .map(EvaluationResult::getBoolean);
   }
 
+  /**
+   * Evaluates the given expression and returns the result as an Interval. If the evaluation fails
+   * or the result is not an interval then an exception is thrown.
+   *
+   * @param expression the expression to evaluate
+   * @param scopeKey the scope to load the variables from (a negative key is intended to imply an
+   *     empty variable context)
+   * @return the evaluation result as interval
+   * @throws EvaluationException if expression evaluation failed
+   */
   public Interval evaluateIntervalExpression(final Expression expression, final long scopeKey) {
     final var result = evaluateExpression(expression, scopeKey);
     if (result.isFailure()) {
@@ -140,6 +154,35 @@ public final class ExpressionProcessor {
                 "Expected result of the expression '%s' to be one of '%s', but was '%s'",
                 expression.getExpression(), expected, result.getType()));
     }
+  }
+
+  /**
+   * Evaluates the given expression and returns the result as ZonedDateTime. If the evaluation fails
+   * or the result is not a ZonedDateTime then an exception is thrown.
+   *
+   * @param expression the expression to evaluate
+   * @param scopeKey the scope to load the variables from (a negative key is intended to imply an
+   *     empty variable context)
+   * @return the evaluation result as ZonedDateTime
+   * @throws EvaluationException if expression evaluation failed
+   */
+  public ZonedDateTime evaluateDateTimeExpression(
+      final Expression expression, final Long scopeKey) {
+    final var result = evaluateExpression(expression, scopeKey);
+    if (result.isFailure()) {
+      throw new EvaluationException(result.getFailureMessage());
+    }
+    if (result.getType() == ResultType.DATE_TIME) {
+      return result.getDateTime();
+    }
+    if (result.getType() == ResultType.STRING) {
+      return ZonedDateTime.parse(result.getString());
+    }
+    final var expected = List.of(ResultType.DATE_TIME, ResultType.STRING);
+    throw new EvaluationException(
+        String.format(
+            "Expected result of the expression '%s' to be one of '%s', but was '%s'",
+            expression.getExpression(), expected, result.getType()));
   }
 
   /**
@@ -245,9 +288,15 @@ public final class ExpressionProcessor {
   private EvaluationResult evaluateExpression(
       final Expression expression, final long variableScopeKey) {
 
-    evaluationContext.variableScopeKey = variableScopeKey;
+    final EvaluationContext context;
+    if (variableScopeKey < 0) {
+      context = EMPTY_EVALUATION_CONTEXT;
+    } else {
+      evaluationContext.variableScopeKey = variableScopeKey;
+      context = evaluationContext;
+    }
 
-    return expressionLanguage.evaluateExpression(expression, evaluationContext);
+    return expressionLanguage.evaluateExpression(expression, context);
   }
 
   private DirectBuffer wrapResult(final String result) {

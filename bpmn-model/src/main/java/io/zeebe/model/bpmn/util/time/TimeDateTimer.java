@@ -16,7 +16,6 @@
 package io.zeebe.model.bpmn.util.time;
 
 import java.time.Duration;
-import java.time.Period;
 import java.time.ZonedDateTime;
 
 public class TimeDateTimer implements Timer {
@@ -27,11 +26,12 @@ public class TimeDateTimer implements Timer {
     this.interval = interval;
   }
 
+  public TimeDateTimer(final ZonedDateTime dateTime) {
+    this(new Interval(Duration.ofMillis(dateTime.toInstant().toEpochMilli())));
+  }
+
   public static TimeDateTimer parse(final String timeDate) {
-    final ZonedDateTime dateTime = ZonedDateTime.parse(timeDate);
-    final Interval interval =
-        new Interval(Period.ZERO, Duration.ofMillis(dateTime.toInstant().toEpochMilli()));
-    return new TimeDateTimer(interval);
+    return new TimeDateTimer(ZonedDateTime.parse(timeDate));
   }
 
   @Override

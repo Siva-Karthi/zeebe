@@ -102,8 +102,10 @@ public final class TransformingDeploymentCreateProcessor
         if (startEvent.isTimer()) {
           hasAtLeastOneTimer = true;
 
-          final Timer timer =
-              startEvent.getTimerFactory().apply(expressionProcessor, record.getKey());
+          // There are no variables when there is no process instance yet,
+          // we use a negative scope key to indicate this
+          final long scopeKey = -1L;
+          final Timer timer = startEvent.getTimerFactory().apply(expressionProcessor, scopeKey);
           catchEventBehavior.subscribeToTimerEvent(
               NO_ELEMENT_INSTANCE,
               NO_ELEMENT_INSTANCE,

@@ -7,7 +7,7 @@
  */
 package io.zeebe.el.impl.feel
 
-import java.time.{Duration, Period}
+import java.time.{Duration, Period, ZoneId, ZonedDateTime}
 import java.{lang, util}
 
 import io.zeebe.el.{EvaluationResult, Expression, ResultType}
@@ -38,6 +38,8 @@ class FeelEvaluationResult(
     case _: ValContext => ResultType.OBJECT
     case _: ValDayTimeDuration => ResultType.DURATION
     case _: ValYearMonthDuration => ResultType.PERIOD
+    case _: ValDateTime => ResultType.DATE_TIME
+    case _: ValLocalDateTime => ResultType.DATE_TIME
     case _ => null
   }
 
@@ -65,6 +67,12 @@ class FeelEvaluationResult(
 
   override def getPeriod: Period = result match {
     case ValYearMonthDuration(period) => period
+    case _ => null
+  }
+
+  override def getDateTime: ZonedDateTime = result match {
+    case ValDateTime(dateTime) => dateTime
+    case ValLocalDateTime(dateTime) => dateTime.atZone(ZoneId.systemDefault())
     case _ => null
   }
 

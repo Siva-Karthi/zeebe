@@ -15,6 +15,7 @@ public enum ResultType {
   STRING,
   DURATION,
   PERIOD,
+  DATE_TIME,
   ARRAY,
   OBJECT
 }

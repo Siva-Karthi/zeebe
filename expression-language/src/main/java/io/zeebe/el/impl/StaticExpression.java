@@ -15,6 +15,7 @@ import io.zeebe.el.ResultType;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Period;
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.agrona.DirectBuffer;
 
@@ -101,17 +102,22 @@ public final class StaticExpression implements Expression, EvaluationResult {
   }
 
   @Override
-  public List<DirectBuffer> getList() {
-    return null;
-  }
-
-  @Override
   public Duration getDuration() {
     return null;
   }
 
   @Override
   public Period getPeriod() {
+    return null;
+  }
+
+  @Override
+  public ZonedDateTime getDateTime() {
+    return null;
+  }
+
+  @Override
+  public List<DirectBuffer> getList() {
     return null;
   }
 }
