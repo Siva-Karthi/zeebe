@@ -27,7 +27,6 @@ import io.zeebe.protocol.impl.SubscriptionUtil;
 import io.zeebe.protocol.impl.record.value.timer.TimerRecord;
 import io.zeebe.protocol.record.intent.TimerIntent;
 import io.zeebe.protocol.record.value.BpmnElementType;
-import io.zeebe.protocol.record.value.ErrorType;
 import io.zeebe.util.buffer.BufferUtil;
 import io.zeebe.util.sched.clock.ActorClock;
 import java.util.HashMap;
@@ -84,13 +83,7 @@ public final class CatchEventBehavior {
     // if all subscriptions are valid then open the subscriptions
     for (final ExecutableCatchEvent event : events) {
       if (event.isTimer()) {
-        final Timer timer;
-        try {
-          timer = event.getTimerFactory().apply(expressionProcessor, context.getKey());
-        } catch (Exception e) {
-          context.raiseIncident(ErrorType.EXTRACT_VALUE_ERROR, e.getMessage());
-          return;
-        }
+        final Timer timer = event.getTimerFactory().apply(expressionProcessor, context.getKey());
         subscribeToTimerEvent(
             context.getKey(),
             context.getValue().getWorkflowInstanceKey(),

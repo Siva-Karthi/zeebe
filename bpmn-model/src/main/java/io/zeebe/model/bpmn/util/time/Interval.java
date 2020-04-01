@@ -42,20 +42,16 @@ public class Interval implements TemporalAmount {
     this.duration = duration;
     this.units = new ArrayList<>();
 
-    if (period != null) {
-      this.units.addAll(period.getUnits());
-    }
-    if (duration != null) {
-      this.units.addAll(duration.getUnits());
-    }
+    this.units.addAll(period.getUnits());
+    this.units.addAll(duration.getUnits());
   }
 
   public Interval(final Duration duration) {
-    this(null, duration);
+    this(Period.ZERO, duration);
   }
 
   public Interval(final Period period) {
-    this(period, null);
+    this(period, Duration.ZERO);
   }
 
   public Period getPeriod() {

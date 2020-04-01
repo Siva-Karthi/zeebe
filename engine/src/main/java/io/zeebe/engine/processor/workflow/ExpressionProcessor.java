@@ -20,6 +20,7 @@ import io.zeebe.engine.state.instance.VariablesState;
 import io.zeebe.model.bpmn.util.time.Interval;
 import io.zeebe.protocol.record.value.ErrorType;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -145,7 +146,15 @@ public final class ExpressionProcessor {
       case PERIOD:
         return new Interval(result.getPeriod());
       case STRING:
-        return Interval.parse(result.getString());
+        try {
+          return Interval.parse(result.getString());
+        } catch (DateTimeParseException e) {
+          throw new EvaluationException(
+              String.format(
+                  "Expected result of the expression '%s' to be parsed to a duration, but was '%s'",
+                  expression.getExpression(), result.getString()),
+              e);
+        }
       default:
         final var expected = List.of(ResultType.DURATION, ResultType.PERIOD, ResultType.STRING);
         throw new EvaluationException(
@@ -303,6 +312,29 @@ public final class ExpressionProcessor {
     return resultView;
   }
 
+  public static final class EvaluationException extends RuntimeException {
+
+    public EvaluationException(final String message) {
+      super(message);
+    }
+
+    public EvaluationException(final String message, final Throwable cause) {
+      super(message, cause);
+    }
+
+    public EvaluationException(final Throwable cause) {
+      super(cause);
+    }
+
+    public EvaluationException(
+        final String message,
+        final Throwable cause,
+        final boolean enableSuppression,
+        final boolean writableStackTrace) {
+      super(message, cause, enableSuppression, writableStackTrace);
+    }
+  }
+
   protected static final class CorrelationKeyResultHandler
       implements Function<EvaluationResult, String> {
 
@@ -353,29 +385,6 @@ public final class ExpressionProcessor {
       variableNameBuffer.wrap(variableName.getBytes());
 
       return variablesState.getVariable(variableScopeKey, variableNameBuffer);
-    }
-  }
-
-  private static final class EvaluationException extends RuntimeException {
-
-    public EvaluationException(final String message) {
-      super(message);
-    }
-
-    public EvaluationException(final String message, final Throwable cause) {
-      super(message, cause);
-    }
-
-    public EvaluationException(final Throwable cause) {
-      super(cause);
-    }
-
-    public EvaluationException(
-        final String message,
-        final Throwable cause,
-        final boolean enableSuppression,
-        final boolean writableStackTrace) {
-      super(message, cause, enableSuppression, writableStackTrace);
     }
   }
 }
