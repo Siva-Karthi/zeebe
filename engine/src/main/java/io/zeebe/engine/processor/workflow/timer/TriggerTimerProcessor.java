@@ -136,10 +136,10 @@ public final class TriggerTimerProcessor implements TypedRecordProcessor<TimerRe
     } catch (Exception e) {
       final String message =
           String.format(
-              "Expected to reschedule repeating timer for element with id '%s', but no timer definition was found",
+              "Expected to reschedule repeating timer for element with id '%s', but an exception occurred",
               BufferUtil.bufferAsString(event.getId()));
       throw new IllegalStateException(message, e);
-      // todo: raise incident instead of throwing an exception
+      // todo(#4208): raise incident instead of throwing an exception
     }
 
     int repetitions = record.getRepetitions();
