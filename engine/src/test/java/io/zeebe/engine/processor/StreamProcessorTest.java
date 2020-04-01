@@ -549,6 +549,7 @@ public final class StreamProcessorTest {
       throws Exception {
     // given
     final var recoveredLatch = new CountDownLatch(1);
+    final var processedLatch = new CountDownLatch(1);
     final var streamProcessor =
         streamProcessorRule.startTypedStreamProcessor(
             (processors, context) ->
@@ -560,12 +561,20 @@ public final class StreamProcessorTest {
                       public void onRecovered(final ReadonlyProcessingContext context) {
                         recoveredLatch.countDown();
                       }
+
+                      @Override
+                      public void processRecord(
+                          final TypedRecord<UnifiedRecordValue> record,
+                          final TypedResponseWriter responseWriter,
+                          final TypedStreamWriter streamWriter) {
+                        processedLatch.countDown();
+                      }
                     }));
     final var stateSnapshotController = streamProcessorRule.getStateSnapshotController();
     recoveredLatch.await(5, TimeUnit.SECONDS);
     final var position =
         streamProcessorRule.writeWorkflowInstanceEvent(WorkflowInstanceIntent.ELEMENT_ACTIVATING);
-    TestUtil.waitUntil(() -> streamProcessorRule.events().count() >= 1);
+    processedLatch.await(5, TimeUnit.SECONDS);
     streamProcessorRule.getClock().addTime(SNAPSHOT_INTERVAL);
     TestUtil.waitUntil(() -> stateSnapshotController.getValidSnapshotsCount() == 1);
 
@@ -578,16 +587,25 @@ public final class StreamProcessorTest {
   }
 
   @Test
-  public void shouldCreateSnapshotsEvenIfNoProcessorProcessEvent() {
+  public void shouldCreateSnapshotsEvenIfNoProcessorProcessEvent() throws InterruptedException {
     // given
+    final var processingLatch = new CountDownLatch(1);
     streamProcessorRule.startTypedStreamProcessor(
         (processors, context) ->
             processors.onEvent(
                 ValueType.WORKFLOW_INSTANCE,
                 WorkflowInstanceIntent.ELEMENT_ACTIVATING,
-                new TypedRecordProcessor<UnifiedRecordValue>() {}));
+                new TypedRecordProcessor<UnifiedRecordValue>() {
+                  @Override
+                  public void processRecord(
+                      final TypedRecord<UnifiedRecordValue> record,
+                      final TypedResponseWriter responseWriter,
+                      final TypedStreamWriter streamWriter) {
+                    processingLatch.countDown();
+                  }
+                }));
     streamProcessorRule.writeWorkflowInstanceEvent(WorkflowInstanceIntent.ELEMENT_ACTIVATING);
-    TestUtil.waitUntil(() -> streamProcessorRule.events().count() >= 1);
+    processingLatch.await(5, TimeUnit.SECONDS);
 
     // when
     streamProcessorRule.closeStreamProcessor();
@@ -621,20 +639,27 @@ public final class StreamProcessorTest {
   }
 
   @Test
-  public void shouldCreateSnapshotsAfterInterval() {
+  public void shouldCreateSnapshotsAfterInterval() throws InterruptedException {
     // given
-    final TypedRecordProcessor typedRecordProcessor = mock(TypedRecordProcessor.class);
+    final CountDownLatch processedLatch = new CountDownLatch(1);
     streamProcessorRule.startTypedStreamProcessor(
         (processors, context) ->
             processors.onEvent(
                 ValueType.WORKFLOW_INSTANCE,
                 WorkflowInstanceIntent.ELEMENT_ACTIVATING,
-                typedRecordProcessor));
+                new TypedRecordProcessor<UnifiedRecordValue>() {
+                  @Override
+                  public void processRecord(
+                      final TypedRecord<UnifiedRecordValue> record,
+                      final TypedResponseWriter responseWriter,
+                      final TypedStreamWriter streamWriter) {
+                    processedLatch.countDown();
+                  }
+                }));
 
     // when
     streamProcessorRule.writeWorkflowInstanceEvent(WorkflowInstanceIntent.ELEMENT_ACTIVATING);
-    TestUtil.waitUntil(
-        () -> streamProcessorRule.events().onlyWorkflowInstanceRecords().count() >= 1);
+    processedLatch.await(5, TimeUnit.SECONDS);
     streamProcessorRule.getClock().addTime(SNAPSHOT_INTERVAL);
 
     // then
