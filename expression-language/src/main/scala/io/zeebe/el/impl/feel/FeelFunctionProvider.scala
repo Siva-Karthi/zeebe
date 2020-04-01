@@ -14,12 +14,13 @@ import org.camunda.feel.syntaxtree._
 class FeelFunctionProvider extends FunctionProvider {
 
   override lazy val functionNames: Iterable[String] = functions.keys
+
   private val functions: Map[String, List[ValFunction]] = Map(
     "appendTo" -> List(appendFunction),
     "cycle" -> List(cycleFunction, cycleInfiniteFunction)
   )
 
-  override def getFunctions(name: String): List[ValFunction] = functions(name)
+  override def getFunctions(name: String): List[ValFunction] = functions.getOrElse(name, Nil)
 
   private def appendFunction = ValFunction(
     params = List("x", "y"),
