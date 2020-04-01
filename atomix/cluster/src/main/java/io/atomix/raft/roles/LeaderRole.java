@@ -1010,7 +1010,6 @@ public final class LeaderRole extends ActiveRole implements ZeebeLogAppender {
   }
 
   private void sendHeartbeats() {
-    raft.checkHeartbeatThread();
     if (isRunning()) {
 
       // If there are no other active members in the cluster, simply complete the heartbeat

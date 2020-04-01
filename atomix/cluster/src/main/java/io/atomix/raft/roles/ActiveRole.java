@@ -238,7 +238,6 @@ public abstract class ActiveRole extends PassiveRole {
 
   @Override
   public void onLeaderHeartbeat(final LeaderHeartbeatRequest request) {
-    raft.checkHeartbeatThread();
     logRequest(request);
 
     // If the request indicates a term that is greater than the current term then

@@ -256,7 +256,7 @@ public class RaftContext implements AutoCloseable {
     protocol.registerQueryHandler(
         request -> runOnContextIfReady(() -> role.onQuery(request), QueryResponse::builder));
     protocol.registerLeaderHeartbeatHandler(
-        request -> runOnHeartbeatContext(() -> role.onLeaderHeartbeat(request)), heartBeatThread);
+        request -> role.onLeaderHeartbeat(request), threadContext);
   }
 
   private <R extends RaftResponse> CompletableFuture<R> runOnContextIfReady(
@@ -291,10 +291,6 @@ public class RaftContext implements AutoCloseable {
                   });
         });
     return future;
-  }
-
-  public void runOnHeartbeatContext(final Runnable runnable) {
-    heartBeatThread.execute(runnable);
   }
 
   public MemberId localMemberId() {
@@ -454,10 +450,6 @@ public class RaftContext implements AutoCloseable {
     final ComposableFuture<Void> future = new ComposableFuture<>();
     threadContext.execute(() -> stateMachine.compact().whenComplete(future));
     return future;
-  }
-
-  public void checkHeartbeatThread() {
-    heartBeatThread.checkThread();
   }
 
   /** Attempts to become the leader. */
