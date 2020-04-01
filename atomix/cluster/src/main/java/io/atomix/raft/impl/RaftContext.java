@@ -255,8 +255,6 @@ public class RaftContext implements AutoCloseable {
         request -> runOnContextIfReady(() -> role.onCommand(request), CommandResponse::builder));
     protocol.registerQueryHandler(
         request -> runOnContextIfReady(() -> role.onQuery(request), QueryResponse::builder));
-    protocol.registerLeaderHeartbeatHandler(
-        request -> role.onLeaderHeartbeat(request), threadContext);
   }
 
   private <R extends RaftResponse> CompletableFuture<R> runOnContextIfReady(

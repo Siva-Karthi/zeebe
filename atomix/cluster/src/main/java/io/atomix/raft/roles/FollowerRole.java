@@ -18,6 +18,7 @@ package io.atomix.raft.roles;
 
 import io.atomix.cluster.ClusterMembershipEvent;
 import io.atomix.cluster.ClusterMembershipEventListener;
+import io.atomix.cluster.MemberId;
 import io.atomix.raft.RaftServer;
 import io.atomix.raft.cluster.RaftMember;
 import io.atomix.raft.cluster.impl.DefaultRaftMember;
@@ -29,7 +30,6 @@ import io.atomix.raft.protocol.ConfigureRequest;
 import io.atomix.raft.protocol.ConfigureResponse;
 import io.atomix.raft.protocol.InstallRequest;
 import io.atomix.raft.protocol.InstallResponse;
-import io.atomix.raft.protocol.LeaderHeartbeatRequest;
 import io.atomix.raft.protocol.PollRequest;
 import io.atomix.raft.protocol.PollResponse;
 import io.atomix.raft.protocol.VoteRequest;
@@ -86,7 +86,9 @@ public final class FollowerRole extends ActiveRole {
   @Override
   public CompletableFuture<InstallResponse> onInstall(final InstallRequest request) {
     final CompletableFuture<InstallResponse> future = super.onInstall(request);
-    resetHeartbeatTimeout();
+    if (isRequestFromCurrentLeader(request.term(), request.leader())) {
+      resetHeartbeatTimeout();
+    }
     return future;
   }
 
@@ -184,14 +186,18 @@ public final class FollowerRole extends ActiveRole {
   @Override
   public CompletableFuture<ConfigureResponse> onConfigure(final ConfigureRequest request) {
     final CompletableFuture<ConfigureResponse> future = super.onConfigure(request);
-    resetHeartbeatTimeout();
+    if (isRequestFromCurrentLeader(request.term(), request.leader())) {
+      resetHeartbeatTimeout();
+    }
     return future;
   }
 
   @Override
   public CompletableFuture<AppendResponse> onAppend(final AppendRequest request) {
     final CompletableFuture<AppendResponse> future = super.onAppend(request);
-    resetHeartbeatTimeout();
+    if (isRequestFromCurrentLeader(request.term(), request.leader())) {
+      resetHeartbeatTimeout();
+    }
     return future;
   }
 
@@ -205,30 +211,21 @@ public final class FollowerRole extends ActiveRole {
     return response;
   }
 
-  @Override
-  public void onLeaderHeartbeat(final LeaderHeartbeatRequest request) {
-    logRequest(request);
-
+  private boolean isRequestFromCurrentLeader(final long term, final MemberId leader) {
     final long currentTerm = raft.getTerm();
     final RaftMember currentLeader = raft.getLeader();
-    if (request.term() < currentTerm
-        || (request.term() == currentTerm
-            && (currentLeader == null || !request.leader().equals(currentLeader.memberId())))) {
+    if (term < currentTerm
+        || (term == currentTerm
+            && (currentLeader == null || !leader.equals(currentLeader.memberId())))) {
       log.debug(
           "Expected heartbeat from {} in term {}, but received one from {} in term {}, ignoring it",
           currentLeader,
           currentTerm,
-          request.leader(),
-          request.term());
-      return;
+          leader,
+          leader);
+      return false;
     }
-
-    // If the request indicates a term that is greater than the current term then
-    // assign that term and leader to the current context
-    raft.getThreadContext().execute(() -> updateTermAndLeader(request.term(), request.leader()));
-
-    // Reset the heartbeat timeout.
-    resetHeartbeatTimeout();
+    return true;
   }
 
   private void resetHeartbeatTimeout() {
