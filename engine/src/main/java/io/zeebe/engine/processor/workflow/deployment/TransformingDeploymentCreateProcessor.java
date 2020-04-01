@@ -36,8 +36,10 @@ import org.agrona.DirectBuffer;
 public final class TransformingDeploymentCreateProcessor
     implements TypedRecordProcessor<DeploymentRecord> {
 
-  public static final String DEPLOYMENT_ALREADY_EXISTS_MESSAGE =
+  private static final String DEPLOYMENT_ALREADY_EXISTS_MESSAGE =
       "Expected to create a new deployment with key '%d', but there is already an existing deployment with that key";
+  private static final String COULD_NOT_CREATE_TIMER_MESSAGE =
+      "Expected to create timer for start event, but encountered the following error: %s";
   private final DeploymentTransformer deploymentTransformer;
   private final WorkflowState workflowState;
   private final CatchEventBehavior catchEventBehavior;
@@ -70,7 +72,12 @@ public final class TransformingDeploymentCreateProcessor
         responseWriter.writeEventOnCommand(key, DeploymentIntent.CREATED, deploymentEvent, command);
         streamWriter.appendFollowUpEvent(key, DeploymentIntent.CREATED, deploymentEvent);
 
-        createTimerIfTimerStartEvent(command, streamWriter);
+        try {
+          createTimerIfTimerStartEvent(command, streamWriter);
+        } catch (RuntimeException e) {
+          final String reason = String.format(COULD_NOT_CREATE_TIMER_MESSAGE, e.getMessage());
+          streamWriter.appendRejection(command, RejectionType.PROCESSING_ERROR, reason);
+        }
       } else {
         // should not be possible
         final String reason = String.format(DEPLOYMENT_ALREADY_EXISTS_MESSAGE, key);
