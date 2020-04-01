@@ -8,18 +8,18 @@
 package io.zeebe.el.impl.feel
 
 import org.camunda.feel.context.Context.StaticContext
-import org.camunda.feel.context.{Context, CustomFunctionProvider}
-import org.camunda.feel.syntaxtree.{ValContext, ValError, ValFunction, ValNull}
+import org.camunda.feel.context.{Context, FunctionProvider}
+import org.camunda.feel.syntaxtree._
 
-class FeelFunctionProvider extends CustomFunctionProvider {
+class FeelFunctionProvider extends FunctionProvider {
 
   override lazy val functionNames: Iterable[String] = functions.keys
-
-  override def getFunction(name: String): Option[ValFunction] = functions.get(name)
-
-  private val functions: Map[String, ValFunction] = Map(
-    "appendTo" -> appendFunction
+  private val functions: Map[String, List[ValFunction]] = Map(
+    "appendTo" -> List(appendFunction),
+    "cycle" -> List(cycleFunction, cycleInfiniteFunction)
   )
+
+  override def getFunctions(name: String): List[ValFunction] = functions(name)
 
   private def appendFunction = ValFunction(
     params = List("x", "y"),
@@ -40,4 +40,28 @@ class FeelFunctionProvider extends CustomFunctionProvider {
     ValContext(StaticContext(variables = mergedVariables))
   }
 
+  private def cycleFunction = ValFunction(
+    params = List("repetitions", "interval"),
+    invoke = {
+      case List(ValNull, ValDayTimeDuration(duration)) => ValString("R/%s".format(duration))
+      case List(ValNull, ValYearMonthDuration(duration)) => ValString("R/%s".format(duration))
+      case List(ValNumber(repetitions), ValDayTimeDuration(duration)) =>
+        ValString("R%d/%S".format(repetitions.toInt, duration))
+      case List(ValNumber(repetitions), ValYearMonthDuration(duration)) =>
+        ValString("R%d/%S".format(repetitions.toInt, duration))
+      case List(e: ValError, _) => e
+      case List(_, e: ValError) => e
+      case args => ValError(s"expected a repetitions (number) and an interval (duration) parameter, but found '$args'")
+    }
+  )
+
+  private def cycleInfiniteFunction = ValFunction(
+    params = List("interval"),
+    invoke = {
+      case List(ValDayTimeDuration(duration)) => ValString("R/%s".format(duration))
+      case List(ValYearMonthDuration(duration)) => ValString("R/%s".format(duration))
+      case List(e: ValError) => e
+      case args => ValError(s"expected an interval (duration) parameter, but found '$args'")
+    }
+  )
 }
