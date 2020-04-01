@@ -63,17 +63,16 @@ public final class ExpressionProcessor {
   }
 
   /**
-   * Evaluates the given expression and returns the result as string wrapped in {@link
-   * DirectBuffer}. If the evaluation fails or the result is not a string then an exception is
-   * thrown.
+   * Evaluates the given expression and returns the result as string. If the evaluation fails or the
+   * result is not a string then an exception is thrown.
    *
    * @param expression the expression to evaluate
    * @param scopeKey the scope to load the variables from (a negative key is intended to imply an
    *     empty variable context)
-   * @return the evaluation result as buffer
+   * @return the evaluation result as string
    * @throws EvaluationException if expression evaluation failed
    */
-  public DirectBuffer evaluateStringExpression(final Expression expression, final long scopeKey) {
+  public String evaluateStringExpression(final Expression expression, final long scopeKey) {
 
     final var evaluationResult = evaluateExpression(expression, scopeKey);
     if (evaluationResult.isFailure()) {
@@ -85,7 +84,7 @@ public final class ExpressionProcessor {
               "Expected result of the expression '%s' to be '%s', but was '%s'.",
               evaluationResult.getExpression(), ResultType.STRING, evaluationResult.getType()));
     }
-    return wrapResult(evaluationResult.getString());
+    return evaluationResult.getString();
   }
 
   /**

@@ -38,18 +38,14 @@ public class TimerEventDefinitionValidator implements ModelElementValidator<Time
     int definitionsCount = 0;
 
     if (timeDate != null) {
-
-      validateTimeDate(element.getTimeDate(), validationResultCollector);
       definitionsCount++;
     }
 
     if (timeDuration != null) {
-      validateTimeDuration(validationResultCollector, timeDuration);
       definitionsCount++;
     }
 
     if (timeCycle != null) {
-      validateTimeCycle(validationResultCollector, timeCycle);
       definitionsCount++;
     }
 
@@ -57,35 +53,5 @@ public class TimerEventDefinitionValidator implements ModelElementValidator<Time
       validationResultCollector.addError(
           0, "Must be exactly one type of timer: timeDuration, timeDate or timeCycle");
     }
-  }
-
-  private void validateTimeDate(
-      final TimeDate timeDate, final ValidationResultCollector validationResultCollector) {
-    //    try {
-    //      TimeDateTimer.parse(timeDate.getTextContent());
-    //    } catch (final DateTimeParseException e) {
-    //      validationResultCollector.addError(0, "Time date is invalid");
-    //      // TODO re-enable validation
-    //    }
-  }
-
-  private void validateTimeCycle(
-      final ValidationResultCollector validationResultCollector, final TimeCycle timeCycle) {
-    //    try {
-    //      RepeatingInterval.parse(timeCycle.getTextContent());
-    //    } catch (final DateTimeParseException e) {
-    //      validationResultCollector.addError(0, "Time cycle is invalid");
-    //      // TODO re-enable validation
-    //    }
-  }
-
-  private void validateTimeDuration(
-      final ValidationResultCollector validationResultCollector, final TimeDuration timeDuration) {
-    //    try {
-    //      Interval.parse(timeDuration.getTextContent());
-    //    } catch (final DateTimeParseException e) {
-    //      validationResultCollector.addError(0, "Time duration is invalid");
-    //      // TODO re-enable validation
-    //    }
   }
 }

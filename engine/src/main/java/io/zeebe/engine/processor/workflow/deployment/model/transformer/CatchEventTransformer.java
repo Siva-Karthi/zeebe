@@ -24,7 +24,6 @@ import io.zeebe.model.bpmn.instance.TimerEventDefinition;
 import io.zeebe.model.bpmn.util.time.RepeatingInterval;
 import io.zeebe.model.bpmn.util.time.TimeDateTimer;
 import io.zeebe.protocol.record.intent.WorkflowInstanceIntent;
-import io.zeebe.util.buffer.BufferUtil;
 
 public final class CatchEventTransformer implements ModelElementTransformer<CatchEvent> {
 
@@ -97,8 +96,7 @@ public final class CatchEventTransformer implements ModelElementTransformer<Catc
       executableElement.setTimerFactory(
           (expressionProcessor, scopeKey) ->
               RepeatingInterval.parse(
-                  BufferUtil.bufferAsString(
-                      expressionProcessor.evaluateStringExpression(expression, scopeKey))));
+                  expressionProcessor.evaluateStringExpression(expression, scopeKey)));
 
     } else if (timerEventDefinition.getTimeDate() != null) {
       final String timeDate = timerEventDefinition.getTimeDate().getTextContent();
