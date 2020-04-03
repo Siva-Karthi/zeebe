@@ -102,7 +102,7 @@ public final class TimerStartEventTest {
         .hasTargetElementId("start_1")
         .hasElementInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE);
 
-    final long now = System.currentTimeMillis();
+    final long now = engine.getClock().getCurrentTimeInMillis();
     assertThat(timerRecord.getDueDate()).isBetween(now, now + 1000L);
   }
 
@@ -130,8 +130,8 @@ public final class TimerStartEventTest {
         .hasTargetElementId("start_5")
         .hasElementInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE);
 
-    final long now = System.currentTimeMillis();
-    assertThat(timerRecord.getDueDate()).isBetween(now, now + 1000L);
+    final long now = engine.getClock().getCurrentTimeInMillis();
+    assertThat(timerRecord.getDueDate()).isBetween(now, now + 10000L);
   }
 
   @Test
@@ -426,10 +426,10 @@ public final class TimerStartEventTest {
         .isTrue();
 
     // when
+    final long now = engine.getClock().getCurrentTimeInMillis();
     engine.increaseTime(Duration.ofSeconds(3));
 
     // then
-    final long now = System.currentTimeMillis();
     TimerRecordValue timerRecord =
         RecordingExporter.timerRecords(TimerIntent.TRIGGERED)
             .withWorkflowKey(workflowKey)
