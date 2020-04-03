@@ -36,17 +36,33 @@ public final class TimerIncidentTest {
   private static final String ELEMENT_ID = "timer-1";
   private static final String DURATION_VARIABLE = "timer_duration";
   private static final String DURATION_EXPRESSION = "duration(" + DURATION_VARIABLE + ")";
+  private static final String CYCLE_EXPRESSION = "cycle(" + DURATION_EXPRESSION + ")";
 
   @Rule
   public final RecordingExporterTestWatcher recordingExporterTestWatcher =
       new RecordingExporterTestWatcher();
 
-  @Rule public final BrokerClassRuleHelper helper = new BrokerClassRuleHelper();
+  @Rule
+  public final BrokerClassRuleHelper helper = new BrokerClassRuleHelper();
 
   private static BpmnModelInstance createWorkflow(final String expression) {
     return Bpmn.createExecutableProcess(PROCESS_ID)
         .startEvent()
         .intermediateCatchEvent(ELEMENT_ID, b -> b.timerWithDurationExpression(expression))
+        .endEvent()
+        .done();
+  }
+
+  private static BpmnModelInstance createWorkflowWithCycle(final String expression) {
+    return Bpmn.createExecutableProcess(PROCESS_ID)
+        .startEvent()
+        .serviceTask(ELEMENT_ID,
+            serviceTaskBuilder -> serviceTaskBuilder
+                .zeebeJobTypeExpression("boundary_timer_test")
+                .boundaryEvent("boundary-event-1",
+                    timerBoundaryEventBuilder -> timerBoundaryEventBuilder.cancelActivity(false)
+                        .timerWithCycleExpression(expression)
+                        .endEvent("boundary-timer-end-event")))
         .endEvent()
         .done();
   }
@@ -110,6 +126,38 @@ public final class TimerIncidentTest {
             "Expected result of the expression '"
                 + DURATION_VARIABLE
                 + "' to be parsed to a duration, but was 'not_a_duration_expression'");
+  }
+
+  @Test
+  public void shouldCreateIncidentIfCycleExpressionCannotBeEvaluated() {
+    // when
+    ENGINE.deployment().withXmlResource(createWorkflowWithCycle(CYCLE_EXPRESSION)).deploy();
+    final long workflowInstanceKey =
+        ENGINE
+            .workflowInstance()
+            .ofBpmnProcessId(PROCESS_ID)
+            .withVariable(DURATION_VARIABLE, "not_a_duration_expression")
+            .create();
+
+    // then
+    final Record<IncidentRecordValue> incident =
+        RecordingExporter.incidentRecords(IncidentIntent.CREATED)
+            .withWorkflowInstanceKey(workflowInstanceKey)
+            .getFirst();
+
+    final Record<WorkflowInstanceRecordValue> elementInstance =
+        RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_ACTIVATING)
+            .withElementId(ELEMENT_ID)
+            .getFirst();
+
+    Assertions.assertThat(incident.getValue())
+        .hasElementInstanceKey(elementInstance.getKey())
+        .hasElementId(elementInstance.getValue().getElementId())
+        .hasErrorType(ErrorType.EXTRACT_VALUE_ERROR)
+        .hasErrorMessage(
+            "failed to evaluate expression '"
+                + CYCLE_EXPRESSION
+                + "': cycle function expected an interval (duration) parameter, but found 'List(ValNull)'");
   }
 
   @Test

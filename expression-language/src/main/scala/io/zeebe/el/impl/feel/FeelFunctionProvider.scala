@@ -52,7 +52,7 @@ class FeelFunctionProvider extends FunctionProvider {
         ValString("R%d/%S".format(repetitions.toInt, duration))
       case List(e: ValError, _) => e
       case List(_, e: ValError) => e
-      case args => ValError(s"expected a repetitions (number) and an interval (duration) parameter, but found '$args'")
+      case args => ValError(s"cycle function expected a repetitions (number) and an interval (duration) parameter, but found '$args'")
     }
   )
 
@@ -62,7 +62,7 @@ class FeelFunctionProvider extends FunctionProvider {
       case List(ValDayTimeDuration(duration)) => ValString("R/%s".format(duration))
       case List(ValYearMonthDuration(duration)) => ValString("R/%s".format(duration))
       case List(e: ValError) => e
-      case args => ValError(s"expected an interval (duration) parameter, but found '$args'")
+      case args => ValError(s"cycle function expected an interval (duration) parameter, but found '$args'")
     }
   )
 }
