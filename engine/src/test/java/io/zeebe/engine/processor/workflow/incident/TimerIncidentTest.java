@@ -42,8 +42,7 @@ public final class TimerIncidentTest {
   public final RecordingExporterTestWatcher recordingExporterTestWatcher =
       new RecordingExporterTestWatcher();
 
-  @Rule
-  public final BrokerClassRuleHelper helper = new BrokerClassRuleHelper();
+  @Rule public final BrokerClassRuleHelper helper = new BrokerClassRuleHelper();
 
   private static BpmnModelInstance createWorkflow(final String expression) {
     return Bpmn.createExecutableProcess(PROCESS_ID)
@@ -56,13 +55,18 @@ public final class TimerIncidentTest {
   private static BpmnModelInstance createWorkflowWithCycle(final String expression) {
     return Bpmn.createExecutableProcess(PROCESS_ID)
         .startEvent()
-        .serviceTask(ELEMENT_ID,
-            serviceTaskBuilder -> serviceTaskBuilder
-                .zeebeJobTypeExpression("boundary_timer_test")
-                .boundaryEvent("boundary-event-1",
-                    timerBoundaryEventBuilder -> timerBoundaryEventBuilder.cancelActivity(false)
-                        .timerWithCycleExpression(expression)
-                        .endEvent("boundary-timer-end-event")))
+        .serviceTask(
+            ELEMENT_ID,
+            serviceTaskBuilder ->
+                serviceTaskBuilder
+                    .zeebeJobTypeExpression("boundary_timer_test")
+                    .boundaryEvent(
+                        "boundary-event-1",
+                        timerBoundaryEventBuilder ->
+                            timerBoundaryEventBuilder
+                                .cancelActivity(false)
+                                .timerWithCycleExpression(expression)
+                                .endEvent("boundary-timer-end-event")))
         .endEvent()
         .done();
   }

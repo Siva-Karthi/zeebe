@@ -74,8 +74,7 @@ public final class TimerStartEventTest {
           .endEvent("end_6")
           .done();
 
-  @Rule
-  public final EngineRule engine = EngineRule.singlePartition();
+  @Rule public final EngineRule engine = EngineRule.singlePartition();
 
   private static BpmnModelInstance createTimerAndMessageStartEventsModel() {
     final ProcessBuilder builder = Bpmn.createExecutableProcess("process");
@@ -142,11 +141,10 @@ public final class TimerStartEventTest {
         .hasTargetElementId("start_5")
         .hasElementInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE);
 
-    final long expected = ZonedDateTime.of(
-        LocalDate.of(3978, 11, 25),
-        LocalTime.of(0, 0, 0),
-        ZoneId.of("UTC")
-    ).toInstant().toEpochMilli();
+    final long expected =
+        ZonedDateTime.of(LocalDate.of(3978, 11, 25), LocalTime.of(0, 0, 0), ZoneId.of("UTC"))
+            .toInstant()
+            .toEpochMilli();
     assertThat(timerRecord.getDueDate()).isEqualTo(expected);
   }
 
