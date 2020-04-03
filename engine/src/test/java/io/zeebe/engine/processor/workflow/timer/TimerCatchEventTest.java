@@ -156,7 +156,7 @@ public final class TimerCatchEventTest {
 
     assertThat(createdEvent.getValue().getDueDate())
         .isBetween(
-            System.currentTimeMillis(),
+            ENGINE.getClock().getCurrentTimeInMillis(),
             createdEvent.getTimestamp() + Duration.ofSeconds(10).toMillis());
   }
 
@@ -192,7 +192,7 @@ public final class TimerCatchEventTest {
 
     assertThat(createdEvent.getValue().getDueDate())
         .isBetween(
-            System.currentTimeMillis(),
+            ENGINE.getClock().getCurrentTimeInMillis(),
             createdEvent.getTimestamp() + Duration.ofSeconds(10).toMillis());
   }
 
@@ -413,7 +413,7 @@ public final class TimerCatchEventTest {
 
     assertThat(timerRecord.getValue().getDueDate())
         .isBetween(
-            System.currentTimeMillis(),
+            ENGINE.getClock().getCurrentTimeInMillis(),
             timerRecord.getTimestamp() + Duration.ofSeconds(1).toMillis());
   }
 
