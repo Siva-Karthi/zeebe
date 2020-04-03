@@ -161,7 +161,7 @@ public final class TimerIncidentTest {
         .hasErrorMessage(
             "failed to evaluate expression '"
                 + CYCLE_EXPRESSION
-                + "': cycle function expected an interval (duration) parameter, but found 'List(ValNull)'");
+                + "': cycle function expected an interval (duration) parameter, but found 'ValNull'");
   }
 
   @Test

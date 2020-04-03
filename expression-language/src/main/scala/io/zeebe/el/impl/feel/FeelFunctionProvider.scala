@@ -31,7 +31,8 @@ class FeelFunctionProvider extends FunctionProvider {
       case List(ValError(_), y: ValContext) => y // ignore variable not found error
       case List(e: ValError, _) => e
       case List(_, e: ValError) => e
-      case args => ValError(s"expected two contexts but found '$args'")
+      case List(x, y) => ValError(s"append function expected two context parameters, but found '$x', '$y'")
+      case args => ValError(s"append function expected two context parameters, but found '$args'")
     }
   )
 
@@ -52,6 +53,7 @@ class FeelFunctionProvider extends FunctionProvider {
         ValString("R%d/%S".format(repetitions.toInt, duration))
       case List(e: ValError, _) => e
       case List(_, e: ValError) => e
+      case List(x, y) => ValError(s"cycle function expected a repetitions (number) and an interval (duration) parameter, but found '$x' and '$y'")
       case args => ValError(s"cycle function expected a repetitions (number) and an interval (duration) parameter, but found '$args'")
     }
   )
@@ -62,6 +64,7 @@ class FeelFunctionProvider extends FunctionProvider {
       case List(ValDayTimeDuration(duration)) => ValString("R/%s".format(duration))
       case List(ValYearMonthDuration(duration)) => ValString("R/%s".format(duration))
       case List(e: ValError) => e
+      case List(x) => ValError(s"cycle function expected an interval (duration) parameter, but found '$x'")
       case args => ValError(s"cycle function expected an interval (duration) parameter, but found '$args'")
     }
   )
