@@ -69,15 +69,16 @@ public final class TransformingDeploymentCreateProcessor
     if (accepted) {
       final long key = keyGenerator.nextKey();
       if (workflowState.putDeployment(key, deploymentEvent)) {
-        responseWriter.writeEventOnCommand(key, DeploymentIntent.CREATED, deploymentEvent, command);
-        streamWriter.appendFollowUpEvent(key, DeploymentIntent.CREATED, deploymentEvent);
-
         try {
           createTimerIfTimerStartEvent(command, streamWriter);
         } catch (RuntimeException e) {
           final String reason = String.format(COULD_NOT_CREATE_TIMER_MESSAGE, e.getMessage());
+          responseWriter.writeRejectionOnCommand(command, RejectionType.PROCESSING_ERROR, reason);
           streamWriter.appendRejection(command, RejectionType.PROCESSING_ERROR, reason);
+          return;
         }
+        responseWriter.writeEventOnCommand(key, DeploymentIntent.CREATED, deploymentEvent, command);
+        streamWriter.appendFollowUpEvent(key, DeploymentIntent.CREATED, deploymentEvent);
       } else {
         // should not be possible
         final String reason = String.format(DEPLOYMENT_ALREADY_EXISTS_MESSAGE, key);
