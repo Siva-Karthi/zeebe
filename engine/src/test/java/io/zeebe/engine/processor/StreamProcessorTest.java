@@ -39,7 +39,6 @@ import io.zeebe.util.sched.ActorControl;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -709,40 +708,44 @@ public final class StreamProcessorTest {
         streamProcessorRule.writeWorkflowInstanceEvent(WorkflowInstanceIntent.ELEMENT_ACTIVATING);
 
     // then
-    onProcessedListener.await();
+    assertThat(onProcessedListener.await()).isTrue();
     assertThat(onProcessedListener.lastProcessedRecord.getPosition()).isEqualTo(position);
   }
 
   /**
    * A simple listener which allows you to wait for specific amount of records to be processed.
    *
-   * <p>As it uses a phaser internally, you must always call {@link #expect(int)} before {@link
-   * #accept(TypedRecord)}}!
+   * <p>It is necessary to always call {@link #expect(int)} before {@link #accept(TypedRecord)}}
    */
   @SuppressWarnings("rawtypes")
   private static final class AwaitableProcessedListener implements Consumer<TypedRecord> {
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
-    private final Phaser phaser = new Phaser();
 
-    private int expectedPhase = -1;
+    private CountDownLatch latch;
     private TypedRecord lastProcessedRecord;
-
-    private AwaitableProcessedListener() {}
 
     @Override
     public void accept(final TypedRecord typedRecord) {
-      phaser.arrive();
+      getLatch().countDown();
       lastProcessedRecord = typedRecord;
     }
 
     private AwaitableProcessedListener expect(final int expectedCount) {
-      expectedPhase = phaser.bulkRegister(expectedCount);
+      latch = new CountDownLatch(expectedCount);
       return this;
     }
 
-    private void await() throws TimeoutException, InterruptedException {
-      Loggers.LOGSTREAMS_LOGGER.info("Expected phase: {}", expectedPhase);
-      phaser.awaitAdvanceInterruptibly(expectedPhase, TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+    private boolean await() throws InterruptedException {
+      return getLatch().await(TIMEOUT.toMillis(), TimeUnit.SECONDS);
+    }
+
+    private CountDownLatch getLatch() {
+      if (latch == null) {
+        throw new IllegalStateException(
+            "Expected #expect to have been called prior to this method, but it was not");
+      }
+
+      return latch;
     }
   }
 }
