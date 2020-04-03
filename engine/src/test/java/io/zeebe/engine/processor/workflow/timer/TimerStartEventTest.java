@@ -25,6 +25,10 @@ import io.zeebe.protocol.record.value.deployment.DeployedWorkflow;
 import io.zeebe.test.util.record.RecordingExporter;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -56,14 +60,22 @@ public final class TimerStartEventTest {
 
   private static final BpmnModelInstance MULTI_TIMER_START_MODEL = createMultipleTimerStartModel();
 
-  private static final BpmnModelInstance FEEL_EXPRESSION_MODEL =
+  private static final BpmnModelInstance FEEL_DATE_TIME_EXPRESSION_MODEL =
       Bpmn.createExecutableProcess("process_5")
           .startEvent("start_5")
-          .timerWithCycleExpression("cycle(duration(\"PT1S\"))")
+          .timerWithDateExpression("date and time(date(\"3978-11-25\"),time(\"T00:00:00@UTC\"))")
           .endEvent("end_5")
           .done();
 
-  @Rule public final EngineRule engine = EngineRule.singlePartition();
+  private static final BpmnModelInstance FEEL_CYCLE_EXPRESSION_MODEL =
+      Bpmn.createExecutableProcess("process_5")
+          .startEvent("start_6")
+          .timerWithCycleExpression("cycle(duration(\"PT1S\"))")
+          .endEvent("end_6")
+          .done();
+
+  @Rule
+  public final EngineRule engine = EngineRule.singlePartition();
 
   private static BpmnModelInstance createTimerAndMessageStartEventsModel() {
     final ProcessBuilder builder = Bpmn.createExecutableProcess("process");
@@ -112,7 +124,7 @@ public final class TimerStartEventTest {
     final DeployedWorkflow deployedWorkflow =
         engine
             .deployment()
-            .withXmlResource(FEEL_EXPRESSION_MODEL)
+            .withXmlResource(FEEL_DATE_TIME_EXPRESSION_MODEL)
             .deploy()
             .getValue()
             .getDeployedWorkflows()
@@ -128,6 +140,38 @@ public final class TimerStartEventTest {
     Assertions.assertThat(timerRecord)
         .hasWorkflowInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE)
         .hasTargetElementId("start_5")
+        .hasElementInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE);
+
+    final long expected = ZonedDateTime.of(
+        LocalDate.of(3978, 11, 25),
+        LocalTime.of(0, 0, 0),
+        ZoneId.of("UTC")
+    ).toInstant().toEpochMilli();
+    assertThat(timerRecord.getDueDate()).isEqualTo(expected);
+  }
+
+  @Test
+  public void shouldCreateRepeatingTimerFromFeelExpression() {
+    // when
+    final DeployedWorkflow deployedWorkflow =
+        engine
+            .deployment()
+            .withXmlResource(FEEL_CYCLE_EXPRESSION_MODEL)
+            .deploy()
+            .getValue()
+            .getDeployedWorkflows()
+            .get(0);
+
+    // then
+    final TimerRecordValue timerRecord =
+        RecordingExporter.timerRecords(TimerIntent.CREATED)
+            .withWorkflowKey(deployedWorkflow.getWorkflowKey())
+            .getFirst()
+            .getValue();
+
+    Assertions.assertThat(timerRecord)
+        .hasWorkflowInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE)
+        .hasTargetElementId("start_6")
         .hasElementInstanceKey(TimerInstance.NO_ELEMENT_INSTANCE);
 
     final long now = engine.getClock().getCurrentTimeInMillis();

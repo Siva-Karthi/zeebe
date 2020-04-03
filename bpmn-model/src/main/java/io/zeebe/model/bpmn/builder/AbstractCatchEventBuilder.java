@@ -102,6 +102,10 @@ public abstract class AbstractCatchEventBuilder<
     return myself;
   }
 
+  public B timerWithDateExpression(final String timerDate) {
+    return timerWithDate(asZeebeExpression(timerDate));
+  }
+
   /**
    * Sets an event definition for the timer with a time date.
    *
