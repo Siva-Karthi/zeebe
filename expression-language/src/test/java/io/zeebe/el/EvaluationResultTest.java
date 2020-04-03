@@ -11,7 +11,9 @@ import static io.zeebe.test.util.MsgPackUtil.asMsgPack;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.Period;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import org.junit.Test;
@@ -96,6 +98,23 @@ public class EvaluationResultTest {
     assertThat(evaluationResult.getType()).isEqualTo(ResultType.PERIOD);
     assertThat(evaluationResult.getDuration()).isNull();
     assertThat(evaluationResult.getPeriod()).isEqualTo(Period.ofMonths(2));
+    assertThat(evaluationResult.getBoolean()).isNull();
+    assertThat(evaluationResult.getString()).isNull();
+    assertThat(evaluationResult.getNumber()).isNull();
+    assertThat(evaluationResult.getList()).isNull();
+  }
+
+  @Test
+  public void dateTimeExpression() {
+    final var evaluationResult = evaluateExpression(
+        "=date and time(\"2020-04-01T10:31:10@Europe/Berlin\")");
+
+    assertThat(evaluationResult.getType()).isEqualTo(ResultType.DATE_TIME);
+    assertThat(evaluationResult.getDuration()).isNull();
+    assertThat(evaluationResult.getPeriod()).isNull();
+    assertThat(evaluationResult.getDateTime()).isEqualTo(
+        LocalDateTime.of(2020, 4, 1, 10, 31, 10)
+            .atZone(ZoneId.of("Europe/Berlin")));
     assertThat(evaluationResult.getBoolean()).isNull();
     assertThat(evaluationResult.getString()).isNull();
     assertThat(evaluationResult.getNumber()).isNull();
