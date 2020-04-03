@@ -59,7 +59,7 @@ public final class TimerStartEventTest {
   private static final BpmnModelInstance FEEL_EXPRESSION_MODEL =
       Bpmn.createExecutableProcess("process_5")
           .startEvent("start_5")
-          .timerWithCycleExpression("\"R1/PT1S\"")
+          .timerWithCycleExpression("cycle(duration(\"PT1S\"))")
           .endEvent("end_5")
           .done();
 
